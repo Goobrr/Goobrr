@@ -1,0 +1,8 @@
+{
+    "name": "goober",
+    "displayName": "goober unit",
+    "author": "Goober",
+    "minGameVersion": "123",
+    "description": "i'm bored",
+    "version": "0.1"
+}
