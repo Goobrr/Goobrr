@@ -1,6 +1,28 @@
 var pinColor = Color.white
 
-const pinHit = new Effect(15, e => {
+
+const pinShine = new Effect(20, e => {
+    Draw.color(pinColor)
+    Draw.z(Layer.bullet - 0.1)
+    Draw.alpha(0.4 * e.fout())
+    for(var i = 0; i < 4; i++){
+        Drawf.tri(e.x, e.y, 10, 240, 180 * (e.fin() / 2) + (90 * i))
+    }  
+
+    Draw.alpha(1)
+    Draw.z(Layer.effect)
+    Lines.stroke(e.fout() * 10)
+    Lines.circle(e.x, e.y, e.fslope() * 40)
+
+    Angles.circleVectors(4, e.fslope() * 40, 180 * e.fin(), (x, y) => {
+        var x = e.x + x
+        var y = e.y + y
+        var angle = Angles.angle(e.x, e.y, x, y)
+        Drawf.tri(x, y, 5, 120 * e.fslope(), angle )
+    });
+})
+
+const pinHit = new Effect(30, e => {
     Draw.color(pinColor)
     Draw.alpha(1 - e.finpow())
     Lines.stroke(15 * (1 - e.finpow()));
@@ -29,7 +51,7 @@ const pinBullet = extend(MissileBulletType, {
     homingRange: 200,
     shootEffect: pinShoot,
     hitEffect: pinHit,
-    despawnEffect: pinHit,
+    despawnEffect: pinShine,
     smokeEffect: Fx.none,
     trailEffect: Fx.none,
     draw(b){
@@ -57,6 +79,7 @@ const pinWeapon = extend(Weapon, {
     alternate: true,
     x: 20,
     bullet: pinBullet,
+    shootY: 0,
     firstShotDelay: 30,
     shootSound: Sounds.missile
 })
@@ -104,4 +127,3 @@ pinWeapon3.y = -10;
 pinWeapon3.reload = 20;
 
 goob.weapons.add(pinWeapon, pinWeapon2, pinWeapon3)
-
