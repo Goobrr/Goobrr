@@ -1,4 +1,5 @@
 const pins = require("pins")
+const damageShock = require("damageShock")
 
 const shockwave = new Effect(40, e => {
     Lines.stroke(5 * e.finpow());
@@ -57,14 +58,20 @@ goob.constructor = () => extend(MechUnit, {
         this.heal()
     },
     remove(){
-        pins.pinShine.at(this.x, this.y)
-        Sounds.lasercharge2.at(this.x, this.y)
-        shockwave.at(this.x, this.y, 0, {direction: -1})
-        Time.run(40, () => {
-            pins.pinHit.at(this.x, this.y);
-            Sounds.shotgun.at(this.x, this.y);
+        if(!Vars.headless){
+            pins.pinShine.at(this.x, this.y)
+            Sounds.lasercharge2.at(this.x, this.y)
+            shockwave.at(this.x, this.y, 0, {direction: -1})
+            Time.run(40, () => {
+                pins.pinHit.at(this.x, this.y);
+                Sounds.shotgun.at(this.x, this.y);
+                this.super$remove()
+                Effect.decal(Core.atlas.find("goober-gitgud"), this.x, this.y, 0, 350, Pal.rubble)
+                damageShock.damageShock.create(this, Team.derelict, this.x, this.y, 0)
+            })
+        }else{
             this.super$remove()
-        })
+        }
     },
 })
 
