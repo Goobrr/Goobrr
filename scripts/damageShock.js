@@ -1,8 +1,8 @@
 const shock = extend(LightningBulletType, {
-    length: 300,
+    length: 250,
     lightningColor: Color.white,
-    damage: 0,
-    lightningDamage: 0
+    damage: 750,
+    lightningDamage: 750
 })
 
 const damageShock = extend(BasicBulletType, {
