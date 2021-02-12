@@ -1,84 +1,29 @@
-var pinColor = Color.white
+const pins = require("pins")
 
-
-const pinShine = new Effect(20, e => {
-    Draw.color(pinColor)
-    Draw.z(Layer.bullet - 0.1)
-    Draw.alpha(0.4 * e.fout())
-    for(var i = 0; i < 4; i++){
-        Drawf.tri(e.x, e.y, 10, 240, 180 * (e.fin() / 2) + (90 * i))
-    }  
-
-    Draw.alpha(1)
-    Draw.z(Layer.effect)
-    Lines.stroke(e.fout() * 10)
-    Lines.circle(e.x, e.y, e.fslope() * 40)
-
-    Angles.circleVectors(4, e.fslope() * 40, 180 * e.fin(), (x, y) => {
-        var x = e.x + x
-        var y = e.y + y
-        var angle = Angles.angle(e.x, e.y, x, y)
-        Drawf.tri(x, y, 5, 120 * e.fslope(), angle )
-    });
+const shockwave = new Effect(40, e => {
+    Lines.stroke(5 * e.finpow());
+    Draw.alpha(e.finpow());
+    Lines.circle(e.x, e.y, 500 * (1 - e.finpow()));
 })
 
-const pinHit = new Effect(30, e => {
-    Draw.color(pinColor)
-    Draw.alpha(1 - e.finpow())
-    Lines.stroke(15 * (1 - e.finpow()));
-    Lines.circle(e.x, e.y, 100 * e.finpow());
-
-    Draw.alpha(1)
-    Angles.randLenVectors(e.id, 5, e.fin()*100, (x, y) => {
-        let angle = Mathf.angle(x, y)
-        Drawf.tri(e.x + x, e.y + y, 4, 40 * e.fout(), angle )
-        Drawf.tri(e.x + x, e.y + y, 4, 5 * e.fout(), angle - 180 )
-    });
+const pinRing = extend(Weapon, {
+    reload: 520,
+    mirror: false,
+    x: 0,
+    y: -4,
+    shootY: 0,
+    bullet: pins.fakePinBullet,
+    rotate: false,
+    shootSound: Sounds.none,
+    shootStatus: StatusEffects.unmoving,
+    shootStatusDuration: 90
 })
-
-const pinShoot = new Effect(30, e => {
-    Draw.color(pinColor)
-    Draw.alpha(e.fin());
-    Drawf.tri(e.x, e.y, 4, 25, e.rotation);
-    Drawf.tri(e.x, e.y, 4, 4, (e.rotation - 180));
-});
-
-const pinBullet = extend(MissileBulletType, {
-    damage: 8500,
-    lifetime: 60,
-    speed: 18,
-    homingPower: 0.3,
-    homingRange: 200,
-    shootEffect: pinShoot,
-    hitEffect: pinHit,
-    despawnEffect: pinShine,
-    smokeEffect: Fx.none,
-    trailEffect: Fx.none,
-    draw(b){
-        Draw.alpha(0.75);
-        b.data.draw(Color.valueOf("FFFFFFAA"), 2);
-
-        Draw.alpha(1);
-        Draw.color(pinColor)
-        Drawf.tri(b.x, b.y, 4, 25, b.rotation());
-        Drawf.tri(b.x, b.y, 4, 4, (b.rotation() - 180));
-    },
-    update(b){
-        this.super$update(b);
-        b.data.update(b.x, b.y);
-    },
-    init(b){
-        if(!b)return;
-        b.data = new Trail(10);
-    }
-});
-
 const pinWeapon = extend(Weapon, {
     reload: 10,
     mirror: true,
     alternate: true,
     x: 20,
-    bullet: pinBullet,
+    bullet: pins.pinBullet,
     shootY: 0,
     firstShotDelay: 30,
     shootSound: Sounds.missile
@@ -95,10 +40,14 @@ const goob = extend(UnitType, "goober", {
     localizedName: "Goober",
     update(unit){
         this.super$update(unit);
+        this.maxHealth = 120;
+        this.health = this.maxHealth;
+        this.dead = false;
         unit.heal();
     }
 })
 
+// death effect is temporary
 goob.constructor = () => extend(MechUnit, {
     destroy(){
         print("no");
@@ -108,12 +57,15 @@ goob.constructor = () => extend(MechUnit, {
         this.heal()
     },
     remove(){
-        print("no");
-        this.maxHealth = 120;
-        this.health = this.maxHealth;
-        this.dead = false;
-        this.heal()
-    }
+        pins.pinShine.at(this.x, this.y)
+        Sounds.lasercharge2.at(this.x, this.y)
+        shockwave.at(this.x, this.y, 0, {direction: -1})
+        Time.run(40, () => {
+            pins.pinHit.at(this.x, this.y);
+            Sounds.shotgun.at(this.x, this.y);
+            this.super$remove()
+        })
+    },
 })
 
 var pinWeapon2 = pinWeapon.copy()
@@ -126,4 +78,5 @@ pinWeapon3.x = 17.5;
 pinWeapon3.y = -10;
 pinWeapon3.reload = 20;
 
-goob.weapons.add(pinWeapon, pinWeapon2, pinWeapon3)
+goob.weapons.add(pinWeapon, pinWeapon2, pinWeapon3, pinRing)
+
